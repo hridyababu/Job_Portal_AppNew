@@ -1,2 +1,2 @@
 # my_first
-this is my first repository (for course)
+this is my first repository (for course mern stack)
