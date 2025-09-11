@@ -1,0 +1,18 @@
+h1{
+    color: green;
+}
+h1{
+    color: red;
+}
+.h1class{
+    color: pink;
+}
+h1[draggable]{
+    color: blue;
+}
+#h4id{
+    font-size: 90px;
+}
+p{
+    background-color: blueviolet !important;
+}
