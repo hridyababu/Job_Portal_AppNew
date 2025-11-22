@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import './LoginModal.css';
 
@@ -11,6 +11,29 @@ const LoginModal = ({ isOpen, onClose, isSignUp, onSwitchToSignUp, onSwitchToLog
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Clear form when modal opens or closes
+  useEffect(() => {
+    if (isOpen) {
+      // Clear form when modal opens
+      setFormData({
+        name: '',
+        email: '',
+        password: ''
+      });
+      setError('');
+    }
+  }, [isOpen]);
+
+  // Clear form when switching between sign in and sign up
+  useEffect(() => {
+    setFormData({
+      name: '',
+      email: '',
+      password: ''
+    });
+    setError('');
+  }, [isSignUp]);
 
   if (!isOpen) return null;
 
@@ -36,8 +59,9 @@ const LoginModal = ({ isOpen, onClose, isSignUp, onSwitchToSignUp, onSwitchToLog
       }
 
       if (result.success) {
-        onClose();
         setFormData({ name: '', email: '', password: '' });
+        setError('');
+        onClose();
       } else {
         setError(result.message);
       }
@@ -73,7 +97,16 @@ const LoginModal = ({ isOpen, onClose, isSignUp, onSwitchToSignUp, onSwitchToLog
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>×</button>
+        <button 
+          className="modal-close" 
+          onClick={() => {
+            setFormData({ name: '', email: '', password: '' });
+            setError('');
+            onClose();
+          }}
+        >
+          ×
+        </button>
         
         <h2>Sign {isSignUp ? 'up' : 'in'} to Job Portal</h2>
         <p className="modal-subtitle">Welcome {isSignUp ? '! Please sign up to continue' : 'back! Please sign in to continue'}</p>
@@ -87,7 +120,11 @@ const LoginModal = ({ isOpen, onClose, isSignUp, onSwitchToSignUp, onSwitchToLog
           <span>or</span>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form 
+          key={`${isSignUp ? 'signup' : 'signin'}-${isOpen}`}
+          onSubmit={handleSubmit} 
+          autoComplete="off"
+        >
           {isSignUp && (
             <div className="form-group">
               <label>Name</label>
@@ -97,6 +134,7 @@ const LoginModal = ({ isOpen, onClose, isSignUp, onSwitchToSignUp, onSwitchToLog
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Enter your name"
+                autoComplete="off"
                 required
               />
             </div>
@@ -110,6 +148,7 @@ const LoginModal = ({ isOpen, onClose, isSignUp, onSwitchToSignUp, onSwitchToLog
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter your email address"
+              autoComplete="off"
               required
             />
           </div>
@@ -122,6 +161,7 @@ const LoginModal = ({ isOpen, onClose, isSignUp, onSwitchToSignUp, onSwitchToLog
               value={formData.password}
               onChange={handleChange}
               placeholder="Enter your password"
+              autoComplete="new-password"
               required
               minLength={6}
             />

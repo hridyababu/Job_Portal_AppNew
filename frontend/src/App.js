@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
 import Home from './pages/Home';
 import AuthCallback from './pages/AuthCallback';
+import RecruiterDashboard from './pages/RecruiterDashboard';
 import './App.css';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/recruiter" element={<RecruiterDashboard />} />
           </Routes>
         </div>
       </Router>

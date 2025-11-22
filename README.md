@@ -25,6 +25,7 @@ A full-stack job portal application built with React, Node.js, Express.js, and M
 
 ### Backend
 - Node.js
+
 - Express.js
 - MongoDB (Mongoose)
 - JWT Authentication

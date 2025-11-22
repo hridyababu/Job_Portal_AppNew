@@ -206,6 +206,7 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react'; // 👈 UPDATED IMPORT
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext'; // 👈 NEW IMPORT
+import JobDetailModal from './JobDetailModal'; // 👈 NEW IMPORT
 import './JobListings.css';
 
 const JobListings = ({ filters }) => {
@@ -218,6 +219,8 @@ const JobListings = ({ filters }) => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -291,6 +294,23 @@ const JobListings = ({ filters }) => {
       alert(`Application Error: ${errorMessage}`);
       console.error('Application submission error:', error);
     }
+  };
+
+  const handleLearnMore = async (jobId) => {
+    try {
+      // Fetch full job details
+      const response = await api.get(`/jobs/${jobId}`);
+      setSelectedJob(response.data);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching job details:', error);
+      alert('Failed to load job details. Please try again.');
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedJob(null);
   };
 
 
@@ -393,7 +413,12 @@ const JobListings = ({ filters }) => {
                       >
                         Apply now
                       </button>
-                      <button className="learn-more-btn">Learn more</button>
+                      <button 
+                        className="learn-more-btn"
+                        onClick={() => handleLearnMore(job._id)}
+                      >
+                        Learn more
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -430,6 +455,12 @@ const JobListings = ({ filters }) => {
           )}
         </div>
       </div>
+      
+      <JobDetailModal
+        job={selectedJob}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };

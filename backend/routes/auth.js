@@ -88,16 +88,27 @@ router.post('/login', [
 
     const { email, password } = req.body;
 
+    // Normalize email (lowercase and trim)
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      console.log(`Login attempt failed: User not found with email: ${normalizedEmail}`);
+      return res.status(400).json({ message: 'No account found with this email. Please sign up first.' });
+    }
+
+    // Check if user has a password (not a Google-only account)
+    if (!user.password) {
+      console.log(`Login attempt failed: User ${normalizedEmail} has no password (Google OAuth account)`);
+      return res.status(400).json({ message: 'This account was created with Google. Please use "Continue with Google" to sign in.' });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      console.log(`Login attempt failed: Incorrect password for email: ${normalizedEmail}`);
+      return res.status(400).json({ message: 'Incorrect password. Please try again.' });
     }
 
     // Generate token
