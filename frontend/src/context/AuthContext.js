@@ -51,7 +51,10 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', response.data.token);
       setUser(response.data.user);
       setIsAuthenticated(true);
-      return { success: true };
+      return { 
+        success: true,
+        message: response.data.message || 'Registration successful!'
+      };
     } catch (error) {
       return {
         success: false,

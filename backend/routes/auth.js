@@ -4,16 +4,14 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const router = express.Router();
 
-// Conditionally load passport for Google OAuth
+// Load passport for Google OAuth
 let passport;
 try {
-  if (process.env.GOOGLE_CLIENT_ID) {
-    passport = require('passport');
-    // Initialize passport strategy if Google OAuth is configured
-    require('../config/passport');
-  }
+  passport = require('passport');
+  // Initialize passport strategy (will only work if credentials are configured)
+  require('../config/passport');
 } catch (err) {
-  console.log('Google OAuth not configured - passport disabled');
+  console.log('Passport not available:', err.message);
 }
 
 // Generate JWT Token
@@ -39,16 +37,40 @@ router.post('/register', [
 
     const { name, email, password, role } = req.body;
 
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists with this email' });
+      // Update existing user with new name and password
+      existingUser.name = name;
+      existingUser.password = password; // Will be hashed by pre-save hook
+      if (role && existingUser.role !== role) {
+        existingUser.role = role;
+      }
+      await existingUser.save();
+      
+      // Generate token for updated user
+      const token = generateToken(existingUser._id);
+      
+      return res.status(200).json({
+        token,
+        user: {
+          id: existingUser._id,
+          name: existingUser.name,
+          email: existingUser.email,
+          role: existingUser.role
+        },
+        message: 'Account updated successfully. You are now logged in.'
+      });
     }
 
     // Create new user
     const user = new User({
       name,
-      email,
+      email: normalizedEmail,
       password,
       role: role || 'user'
     });
@@ -91,11 +113,14 @@ router.post('/login', [
     // Normalize email (lowercase and trim)
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Find user
+    // Find user (case-insensitive)
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       console.log(`Login attempt failed: User not found with email: ${normalizedEmail}`);
-      return res.status(400).json({ message: 'No account found with this email. Please sign up first.' });
+      return res.status(400).json({ 
+        message: 'No account found with this email. Please sign up first.',
+        suggestion: 'You can sign up with this email to create an account or update an existing one.'
+      });
     }
 
     // Check if user has a password (not a Google-only account)
@@ -108,7 +133,10 @@ router.post('/login', [
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       console.log(`Login attempt failed: Incorrect password for email: ${normalizedEmail}`);
-      return res.status(400).json({ message: 'Incorrect password. Please try again.' });
+      return res.status(400).json({ 
+        message: 'Incorrect password. Please try again.',
+        suggestion: 'If you forgot your password, you can sign up again with the same email to reset it.'
+      });
     }
 
     // Generate token
@@ -143,13 +171,26 @@ router.get('/me', require('../middleware/auth'), async (req, res) => {
 });
 
 // @route   GET /api/auth/google
-// @desc    Initiate Google OAuth
+// @desc    Initiate Google OAuth - Redirects to Google's login page
 // @access  Public
-if (passport && process.env.GOOGLE_CLIENT_ID) {
+console.log('Auth route - Checking OAuth config:');
+console.log('  passport:', passport ? 'LOADED' : 'NOT LOADED');
+console.log('  GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET');
+console.log('  GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET');
+
+if (passport && 
+    process.env.GOOGLE_CLIENT_ID && 
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GOOGLE_CLIENT_ID !== 'your-google-client-id' &&
+    process.env.GOOGLE_CLIENT_SECRET !== 'your-google-client-secret') {
+  
+  console.log('✅ Google OAuth route configured - redirecting to Google');
+  
+  // Real Google OAuth - redirects to Google's official login page
   router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
   // @route   GET /api/auth/google/callback
-  // @desc    Google OAuth callback
+  // @desc    Google OAuth callback - Google redirects here after login
   // @access  Public
   router.get('/google/callback', 
     passport.authenticate('google', { session: false }),
@@ -168,9 +209,29 @@ if (passport && process.env.GOOGLE_CLIENT_ID) {
     }
   );
 } else {
-  // Google OAuth not configured - return error
+  // Google OAuth not configured - only real OAuth is allowed
+  console.log('❌ Google OAuth route NOT configured');
   router.get('/google', (req, res) => {
-    res.status(503).json({ message: 'Google OAuth is not configured. Please set up Google OAuth credentials.' });
+    console.log('GET /api/auth/google - OAuth not configured');
+    res.status(503).json({ 
+      message: 'Google OAuth is not configured. Please set up Google OAuth credentials to use Google login.',
+      setupRequired: true,
+      debug: {
+        passport: passport ? 'loaded' : 'not loaded',
+        clientId: process.env.GOOGLE_CLIENT_ID ? 'set' : 'not set',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET ? 'set' : 'not set'
+      },
+      instructions: [
+        '1. Go to https://console.cloud.google.com/',
+        '2. Create OAuth 2.0 credentials',
+        '3. Add to backend/.env file:',
+        '   GOOGLE_CLIENT_ID=your-client-id',
+        '   GOOGLE_CLIENT_SECRET=your-client-secret',
+        '   GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback',
+        '4. Restart your backend server',
+        '5. See QUICK_GOOGLE_SETUP.md for step-by-step guide'
+      ]
+    });
   });
   
   router.get('/google/callback', (req, res) => {

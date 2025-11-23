@@ -207,3 +207,99 @@
   font-weight: 500;
 }
 
+.google-email-form {
+  margin-bottom: 1.5rem;
+}
+
+.google-email-info {
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #fff3cd;
+  border-radius: 6px;
+  border-left: 3px solid #ffc107;
+  line-height: 1.5;
+}
+
+.google-email-note {
+  display: block;
+  margin-top: 0.25rem;
+  color: #666;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.google-email-info strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.google-email-info small {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.google-email-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.google-email-form .form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.google-email-form .form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.google-form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.cancel-google-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.cancel-google-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.submit-google-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.submit-google-btn:hover:not(:disabled) {
+  background-color: #357ae8;
+}
+
+.submit-google-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

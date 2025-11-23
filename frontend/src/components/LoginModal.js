@@ -61,6 +61,10 @@ const LoginModal = ({ isOpen, onClose, isSignUp, onSwitchToSignUp, onSwitchToLog
       if (result.success) {
         setFormData({ name: '', email: '', password: '' });
         setError('');
+        // Show success message if provided
+        if (result.message) {
+          alert(result.message);
+        }
         onClose();
       } else {
         setError(result.message);
@@ -73,24 +77,45 @@ const LoginModal = ({ isOpen, onClose, isSignUp, onSwitchToSignUp, onSwitchToLog
   };
 
   const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+    
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+    
     try {
-      // Check if Google OAuth is available
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/google`, {
+      // Check if OAuth is configured by making a request
+      const response = await fetch(`${apiUrl}/auth/google`, {
         method: 'GET',
-        redirect: 'manual'
+        redirect: 'manual',
+        credentials: 'include'
       });
       
-      if (response.type === 'opaqueredirect' || response.status === 302) {
-        // Redirect to Google OAuth
-        window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/google`;
-      } else {
-        // Google OAuth not configured
-        const data = await response.json();
-        setError(data.message || 'Google OAuth is not configured. Please use email/password login.');
+      // If it's a redirect (302), OAuth is configured - redirect to Google
+      if (response.status === 302 || response.type === 'opaqueredirect' || response.status === 0) {
+        window.location.href = `${apiUrl}/auth/google`;
+        return;
       }
+      
+      // If error (503), OAuth not configured - show error message
+      if (response.status === 503) {
+        const data = await response.json();
+        setError(data.message || 'Google OAuth is not configured. Please set up Google OAuth credentials.');
+        setLoading(false);
+        
+        // Show detailed instructions in console
+        if (data.instructions) {
+          console.log('Google OAuth Setup Instructions:');
+          data.instructions.forEach(instruction => console.log(instruction));
+        }
+        return;
+      }
+      
+      // Fallback: try redirect anyway
+      window.location.href = `${apiUrl}/auth/google`;
     } catch (error) {
-      // Try redirect anyway (might work with CORS)
-      window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/google`;
+      // Network error - try redirect anyway (might work)
+      console.error('Error checking Google OAuth:', error);
+      window.location.href = `${apiUrl}/auth/google`;
     }
   };
 
@@ -111,9 +136,13 @@ const LoginModal = ({ isOpen, onClose, isSignUp, onSwitchToSignUp, onSwitchToLog
         <h2>Sign {isSignUp ? 'up' : 'in'} to Job Portal</h2>
         <p className="modal-subtitle">Welcome {isSignUp ? '! Please sign up to continue' : 'back! Please sign in to continue'}</p>
 
-        <button className="google-btn" onClick={handleGoogleLogin}>
+        <button 
+          className="google-btn" 
+          onClick={handleGoogleLogin}
+          disabled={loading}
+        >
           <span className="google-icon">G</span>
-          Continue with Google
+          {loading ? 'Redirecting to Google...' : 'Continue with Google'}
         </button>
 
         <div className="divider">

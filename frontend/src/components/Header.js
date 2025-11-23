@@ -24,7 +24,10 @@ const Header = () => {
           </Link>
           
           <div className="header-actions">
-            <Link to="/recruiter" className="recruiter-login">Recruiter Login</Link>
+            {/* Only show Recruiter Login for non-authenticated users or recruiters */}
+            {(!isAuthenticated || (isAuthenticated && user?.role === 'recruiter')) && (
+              <Link to="/recruiter" className="recruiter-login">Recruiter Login</Link>
+            )}
             {isAuthenticated ? (
               <div className="user-menu">
                 <span className="user-name">Hi, {user?.name}</span>

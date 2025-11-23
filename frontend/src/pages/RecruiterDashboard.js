@@ -5,7 +5,7 @@ import api from '../utils/api';
 import './RecruiterDashboard.css';
 
 const RecruiterDashboard = () => {
-  const { isAuthenticated, user } = useContext(AuthContext);
+  const { isAuthenticated, user, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -27,19 +27,38 @@ const RecruiterDashboard = () => {
   });
 
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) {
+      return;
+    }
+    
+    // Check authentication and role
     if (!isAuthenticated) {
       navigate('/');
       return;
     }
+    
     if (user?.role !== 'recruiter') {
-      alert('Only recruiters can access this page');
-      navigate('/');
+      // Use setTimeout to avoid navigation during render
+      setTimeout(() => {
+        alert('Only recruiters can access this page');
+        navigate('/');
+      }, 0);
       return;
     }
-    fetchMyJobs();
-  }, [isAuthenticated, user, navigate]);
+    
+    // Only fetch jobs if user is authenticated and is a recruiter
+    if (isAuthenticated && user?.role === 'recruiter' && user?._id) {
+      fetchMyJobs();
+    }
+  }, [isAuthenticated, user, navigate, authLoading]);
 
   const fetchMyJobs = async () => {
+    // Only fetch if user is a recruiter
+    if (!user || user.role !== 'recruiter') {
+      return;
+    }
+    
     try {
       const response = await api.get('/jobs');
       // Filter jobs posted by current recruiter
@@ -169,6 +188,18 @@ const RecruiterDashboard = () => {
     }
   };
 
+  // Show loading while auth is loading
+  if (authLoading) {
+    return (
+      <div className="recruiter-dashboard">
+        <div className="dashboard-container">
+          <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated or not a recruiter
   if (!isAuthenticated || user?.role !== 'recruiter') {
     return null;
   }

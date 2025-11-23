@@ -6,9 +6,10 @@ To enable Google OAuth authentication, you need to set up Google OAuth credentia
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select an existing one
-3. Enable the **Google+ API**:
+3. Enable the **Google Identity Services** (or use OAuth 2.0):
    - Navigate to "APIs & Services" > "Library"
-   - Search for "Google+ API" and enable it
+   - Search for "Google Identity" or go directly to Credentials
+   - Note: Google+ API is deprecated, but OAuth 2.0 still works
 4. Create OAuth 2.0 credentials:
    - Go to "APIs & Services" > "Credentials"
    - Click "Create Credentials" > "OAuth client ID"
